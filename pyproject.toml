@@ -1,24 +1,62 @@
 [project]
 name = "bubblify"
 version = "0.1.0"
-description = "Add your description here"
+description = "Interactive URDF spherization tool using Viser for collision approximation"
 readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Bas van der Heijden", email = "b.heijden@hotmail.com" }
+]
+keywords = ["robotics", "urdf", "collision", "spherization", "viser", "gui"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9", 
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 requires-python = ">=3.8"
 dependencies = [
     "robot-descriptions>=1.21.0",
     "viser>=1.0.8",
+    "yourdfpy>=0.0.56",
+    "trimesh>=4.0.0",
+    "numpy>=1.20.0",
 ]
+
+[project.scripts]
+bubblify = "bubblify.cli:main"
 
 [dependency-groups]
 dev = [
     "ruff>=0.12.12",
     "setuptools>=75.3.2",
+    "pytest>=7.0.0",
 ]
 
 [tool.ruff]
 include = ["bubblify/**/*.py", "tests/**/*.py", "scripts/**/*.py", "scratch/**/*.py"]
 line-length = 127
 indent-width = 4
+
+[tool.ruff.lint]
+ignore = [
+    "E402",  # module level import not at top of file
+    "E501",  # line too long --> handled by ruff formatting
+]
+select = ["E", "F", "I001"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+lines-after-imports = 2
+order-by-type = false
 
 [build-system]
 requires = ["setuptools>=75", "wheel"]

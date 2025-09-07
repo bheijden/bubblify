@@ -1,0 +1,12 @@
+collision_spheres:
+  link_base:
+  - center:
+    - 0.0
+    - 0.0
+    - 0.029195630011943988
+    radius: 0.05
+metadata:
+  total_spheres: 1
+  links:
+  - link_base
+  export_timestamp: 1757254770.4417694

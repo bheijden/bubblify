@@ -1,0 +1,19 @@
+collision_spheres:
+  panda_link0:
+  - center:
+    - 0.1
+    - 0.0
+    - 0.0
+    radius: 0.05
+  panda_link3:
+  - center:
+    - -0.05
+    - 0.1
+    - 0.02
+    radius: 0.03
+metadata:
+  total_spheres: 2
+  links:
+  - panda_link0
+  - panda_link3
+  export_timestamp: 1699123456.789
