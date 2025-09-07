@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JupyterPersistentConnectionParameters">
+    <option name="knownRemoteServers">
+      <list>
+        <JupyterConnectionParameters>
+          <option name="authType" value="notebook" />
+          <option name="token" value="5be31bf1f5271a79505ed329c1429d52c0dd80e535471b5c" />
+          <option name="urlString" value="http://localhost:8888" />
+          <authParams2>
+            <map>
+              <entry key="token" value="5be31bf1f5271a79505ed329c1429d52c0dd80e535471b5c" />
+            </map>
+          </authParams2>
+        </JupyterConnectionParameters>
+      </list>
+    </option>
+    <option name="moduleParameters">
+      <map>
+        <entry key="$PROJECT_DIR$/../eagerx-dev/eagerx/.idea/eagerx.iml">
+          <value>
+            <JupyterConnectionParameters>
+              <option name="managed" value="true" />
+            </JupyterConnectionParameters>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/../supergraph/.idea/supergraph.iml">
+          <value>
+            <JupyterConnectionParameters>
+              <option name="managed" value="true" />
+              <option name="sdkHomePath" value="$PROJECT_DIR$/../.cache/pypoetry/virtualenvs/supergraph-6YDLwPvw-py3.8/bin/python" />
+            </JupyterConnectionParameters>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

@@ -3,5 +3,26 @@ name = "bubblify"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
-dependencies = []
+requires-python = ">=3.8"
+dependencies = [
+    "robot-descriptions>=1.21.0",
+    "viser>=1.0.8",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.12",
+    "setuptools>=75.3.2",
+]
+
+[tool.ruff]
+include = ["bubblify/**/*.py", "tests/**/*.py", "scripts/**/*.py", "scratch/**/*.py"]
+line-length = 127
+indent-width = 4
+
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["bubblify"]
