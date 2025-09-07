@@ -22,7 +22,8 @@ class BubblifyApp:
         robot_name: str = "panda",
         urdf_path: Optional[Path] = None,
         show_collision: bool = False,
-        port: int = 8080
+        port: int = 8080,
+        spherization_yml: Optional[Path] = None
     ):
         """Initialize the Bubblify application.
         
@@ -31,6 +32,7 @@ class BubblifyApp:
             urdf_path: Path to custom URDF file
             show_collision: Whether to show collision meshes
             port: Viser server port
+            spherization_yml: Path to existing spherization YAML file to load
         """
         self.server = viser.ViserServer(port=port)
         self.show_collision = show_collision
@@ -106,6 +108,10 @@ class BubblifyApp:
 
         # Initialize visibility states
         self._update_mesh_visibility()
+
+        # Load spherization YAML if provided
+        if spherization_yml is not None:
+            self._load_spherization_yaml(spherization_yml)
 
         print(f"🎯 Bubblify server running at http://localhost:{port}")
         print("Use the GUI controls to add and edit collision spheres!")
@@ -362,7 +368,6 @@ class BubblifyApp:
             # Export options
             export_yml_btn = self.server.gui.add_button("Export Spheres (YAML)")
             export_urdf_btn = self.server.gui.add_button("Export URDF with Spheres")
-            import_yml_btn = self.server.gui.add_button("Import from YAML")
             
             # Status with error details (read-only)
             export_status = self.server.gui.add_markdown("Ready to export")
@@ -447,53 +452,6 @@ class BubblifyApp:
                     export_details.content = str(e)
                     print(f"URDF export failed: {e}")
             
-            @import_yml_btn.on_click
-            def _(_):
-                """Import sphere configuration from YAML."""
-                try:
-                    import yaml
-                    
-                    # Try both current directory and URDF directory
-                    import_path = Path(f"{export_name_input.value}.yml")
-                    if not import_path.exists() and self.urdf_path and self.urdf_path.parent:
-                        import_path = self.urdf_path.parent / f"{export_name_input.value}.yml"
-                    
-                    if not import_path.exists():
-                        export_status.content = f"❌ File not found"
-                        export_details.content = f"Tried: {import_path.name}"
-                        return
-                    
-                    data = yaml.safe_load(import_path.read_text())
-                    collision_spheres = data.get('collision_spheres', {})
-                    
-                    # Clear existing spheres
-                    self.sphere_store.clear()
-                    
-                    # Import spheres
-                    total_imported = 0
-                    for link_name, spheres_data in collision_spheres.items():
-                        for sphere_data in spheres_data:
-                            sphere = self.sphere_store.add(
-                                link_name,
-                                xyz=tuple(sphere_data['center']),
-                                radius=sphere_data['radius']
-                            )
-                            self._create_sphere_visualization(sphere)
-                            total_imported += 1
-                    
-                    export_status.content = f"✅ Imported {total_imported} spheres"
-                    export_details.content = f"From: {import_path.name}"
-                    print(f"Imported {total_imported} spheres from {import_path.absolute()}")
-                    
-                except ImportError:
-                    error_msg = "PyYAML not installed. Run: pip install PyYAML"
-                    export_status.content = "❌ Missing dependency"
-                    export_details.content = error_msg
-                    print(f"Import failed: {error_msg}")
-                except Exception as e:
-                    export_status.content = f"❌ Import failed: {type(e).__name__}"
-                    export_details.content = str(e)
-                    print(f"Import failed: {e}")
 
     def _create_sphere_visualization(self, sphere: Sphere):
         """Create or update the 3D visualization for a sphere."""
@@ -673,6 +631,39 @@ class BubblifyApp:
                 sphere.node.opacity = new_opacity
                 # Handle visibility (0.0 opacity = invisible)
                 sphere.node.visible = new_opacity > 0.0
+
+    def _load_spherization_yaml(self, yaml_path: Path):
+        """Load sphere configuration from YAML file at startup."""
+        try:
+            import yaml
+            
+            if not yaml_path.exists():
+                print(f"⚠️  Spherization YAML file not found: {yaml_path}")
+                return
+            
+            print(f"📥 Loading spherization from: {yaml_path}")
+            data = yaml.safe_load(yaml_path.read_text())
+            collision_spheres = data.get('collision_spheres', {})
+            
+            # Import spheres
+            total_loaded = 0
+            for link_name, spheres_data in collision_spheres.items():
+                for sphere_data in spheres_data:
+                    sphere = self.sphere_store.add(
+                        link_name,
+                        xyz=tuple(sphere_data['center']),
+                        radius=sphere_data['radius']
+                    )
+                    self._create_sphere_visualization(sphere)
+                    total_loaded += 1
+            
+            print(f"✅ Loaded {total_loaded} spheres from {yaml_path.name}")
+            
+        except ImportError:
+            print("⚠️  PyYAML not installed. Cannot load spherization YAML.")
+            print("   Install with: pip install PyYAML")
+        except Exception as e:
+            print(f"❌ Failed to load spherization YAML: {e}")
 
     def _add_reference_grid(self):
         """Add a reference grid to the scene."""

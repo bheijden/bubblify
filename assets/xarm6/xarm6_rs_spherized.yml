@@ -1,12 +1,26 @@
 collision_spheres:
-  link_base:
+  camera_color_frame:
   - center:
     - 0.0
     - 0.0
-    - 0.029195630011943988
+    - 0.0
+    radius: 0.05
+  camera_depth_optical_frame:
+  - center:
+    - 0.0
+    - 0.0
+    - 0.0
+    radius: 0.05
+  link6:
+  - center:
+    - 0.0
+    - 0.0
+    - 0.0
     radius: 0.05
 metadata:
-  total_spheres: 1
+  total_spheres: 3
   links:
-  - link_base
-  export_timestamp: 1757254770.4417694
+  - camera_color_frame
+  - camera_depth_optical_frame
+  - link6
+  export_timestamp: 1757255438.0608504

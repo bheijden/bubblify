@@ -395,8 +395,24 @@ def inject_spheres_into_urdf_xml(
             geom = ET.SubElement(coll, "geometry")
             sph = ET.SubElement(geom, "sphere", {"radius": f"{sphere.radius}"})
     
-    # Pretty format the XML with proper indentation
-    ET.indent(root, space="  ", level=0)
+    # Pretty format the XML with proper indentation (Python 3.8 compatible)
+    def indent_xml(elem, level=0, indent="  "):
+        """Indent XML for pretty printing (Python 3.8 compatible)."""
+        i = "\n" + level * indent
+        if len(elem):
+            if not elem.text or not elem.text.strip():
+                elem.text = i + indent
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+            for child in elem:
+                indent_xml(child, level + 1, indent)
+            if not child.tail or not child.tail.strip():
+                child.tail = i
+        else:
+            if level and (not elem.tail or not elem.tail.strip()):
+                elem.tail = i
+    
+    indent_xml(root)
     
     # Add XML declaration and return
     xml_content = ET.tostring(root, encoding="unicode")

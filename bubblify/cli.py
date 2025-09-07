@@ -79,7 +79,8 @@ Examples:
             robot_name="custom",
             urdf_path=args.urdf_path,
             show_collision=args.show_collision,
-            port=args.port
+            port=args.port,
+            spherization_yml=args.spherization_yml
         )
         
         print("🎮 GUI Controls:")
@@ -94,11 +95,6 @@ Examples:
         print("  • Toggle mesh visibility and adjust sphere opacity for focus")
         print("  • Export YAML for quick save/load, URDF for final use")
         print()
-        
-        # TODO: Load spherization YAML if provided
-        if args.spherization_yml is not None:
-            print(f"⚠️  Note: Spherization YAML loading not yet implemented")
-            print(f"    Will load: {args.spherization_yml}")
         
         # Run the application
         app.run()
