@@ -10,3 +10,4 @@ debug_*
 .venv
 # Coding agents
 agents/**/*
+CLAUDE.md
