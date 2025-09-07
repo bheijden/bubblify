@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import time
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -74,6 +75,7 @@ class BubblifyApp:
         self.current_link: str = ""
         self.joint_sliders: List[viser.GuiInputHandle[float]] = []
         self.transform_control: Optional[viser.TransformControlsHandle] = None
+        self.radius_gizmo: Optional[viser.TransformControlsHandle] = None
 
         # GUI control references for syncing
         self._link_dropdown = None
@@ -344,6 +346,7 @@ class BubblifyApp:
                     sphere.radius = float(sphere_radius.value)
                     sphere.color = tuple(int(c) for c in sphere_color.value)
                     self._update_sphere_visualization(sphere)
+                    self._update_radius_gizmo()
             
             sphere_radius.on_update(lambda _: update_sphere_properties())
             sphere_color.on_update(lambda _: update_sphere_properties())
@@ -507,6 +510,7 @@ class BubblifyApp:
             
             # Update visuals and UI
             self._update_transform_control()
+            self._update_radius_gizmo()
             self._update_sphere_opacities()
             self._update_mesh_visibility()
             self._update_sphere_properties_ui()
@@ -547,12 +551,82 @@ class BubblifyApp:
                         current_sphere = self.sphere_store.by_id[self.current_sphere_id]
                         current_sphere.local_xyz = tuple(self.transform_control.position)
                         self._update_sphere_visualization(current_sphere)
+                        self._update_radius_gizmo()
 
     def _remove_transform_control(self):
         """Remove the current transform control."""
         if self.transform_control is not None:
             self.transform_control.remove()
             self.transform_control = None
+        self._remove_radius_gizmo()
+
+    def _remove_radius_gizmo(self):
+        """Remove the current radius gizmo."""
+        if self.radius_gizmo is not None:
+            self.radius_gizmo.remove()
+            self.radius_gizmo = None
+
+    def _update_radius_gizmo(self):
+        """Update radius gizmo for the currently selected sphere."""
+        # Remove any previous gizmo
+        self._remove_radius_gizmo()
+
+        if self.current_sphere_id is None or self.current_sphere_id not in self.sphere_store.by_id:
+            return
+
+        s = self.sphere_store.by_id[self.current_sphere_id]
+        parent_frame = self.sphere_store.group_nodes.get(s.link)
+        if parent_frame is None:
+            return
+
+        # Place the gizmo at 45 degrees (X+Y direction) to avoid overlap with transform controls
+        # Position it on the sphere surface at 45 degrees in XY plane
+        offset_distance = s.radius
+        angle_rad = math.pi / 4  # 45 degrees
+        gx = s.local_xyz[0] + offset_distance * math.cos(angle_rad)
+        gy = s.local_xyz[1] + offset_distance * math.sin(angle_rad)
+        gz = s.local_xyz[2]
+        
+        gizmo_name = f"{parent_frame.name}/radius_gizmo_{s.id}"
+
+        self.radius_gizmo = self.server.scene.add_transform_controls(
+            gizmo_name,
+            scale=0.3,  # Make it even more visible
+            active_axes=(True, False, False),      # Only X axis visible and active
+            disable_sliders=True,
+            disable_rotations=True,
+            # Constrain movement along the radial direction (45-degree line)
+            translation_limits=((0.001, 10.0), (gy, gy), (gz, gz)),
+            position=(gx, gy, gz),
+        )
+
+        @self.radius_gizmo.on_update
+        def _(_):
+            if self.current_sphere_id not in self.sphere_store.by_id:
+                return
+            s2 = self.sphere_store.by_id[self.current_sphere_id]
+            # Since we constrained Y and Z, only X movement affects radius
+            # Calculate new radius based on X position change
+            angle_rad = math.pi / 4  # 45 degrees
+            cos_angle = math.cos(angle_rad)
+            
+            # The X position change directly corresponds to radius change along the 45-degree line
+            gizmo_x = float(self.radius_gizmo.position[0])
+            expected_center_x = s2.local_xyz[0] + s2.radius * cos_angle
+            
+            # Calculate radius from the X-axis movement
+            new_r = s2.radius + (gizmo_x - expected_center_x) / cos_angle
+            new_r = max(0.005, new_r)  # Minimum radius to prevent issues
+            
+            # Only update if there's a meaningful change to prevent flickering
+            if abs(new_r - s2.radius) > 0.001:
+                s2.radius = new_r
+                self._update_sphere_visualization(s2)
+                # Update the UI slider to reflect the new radius
+                if self._sphere_radius_slider:
+                    self._updating_sphere_ui = True
+                    self._sphere_radius_slider.value = new_r
+                    self._updating_sphere_ui = False
 
     def _update_sphere_properties_ui(self):
         """Update the sphere property UI controls to reflect the currently selected sphere."""
@@ -694,4 +768,5 @@ class BubblifyApp:
         finally:
             # Cleanup
             self._remove_transform_control()
+            self._remove_radius_gizmo()
             self.urdf_viz.remove()
