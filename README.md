@@ -2,8 +2,8 @@
 # Bubblify: Interactive URDF Spherization Tool
 
 <p align="center">
-  <img src="public/spherization_xarm6.png" width="45%"/>
-  <img src="public/spherization_openarm.png" width="35.9%"/>
+  <img src="https://github.com/bheijden/bubblify/tree/master/public/spherization_xarm6.png" width="45%"/>
+  <img src="https://github.com/bheijden/bubblify/tree/master/public/spherization_openarm.png" width="35.9%"/>
 </p>
 
 
@@ -62,7 +62,7 @@ bubblify --urdf_path ./robot.urdf --port 8081 --show_collision
 ### Demo Video
 <p align="center">
   <video width="80%" controls onloadedmetadata="this.defaultPlaybackRate=2; this.playbackRate=2;">
-    <source src="public/bubblify_demo.mp4" type="video/mp4">
+    <source src="https://github.com/bheijden/bubblify/tree/master/public/bubblify_demo.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </p>
