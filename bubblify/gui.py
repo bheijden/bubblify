@@ -556,7 +556,7 @@ class BubblifyApp:
                 
                 self.transform_control = self.server.scene.add_transform_controls(
                     control_name,
-                    scale=0.3,
+                    scale=0.7,
                     disable_rotations=True,  # Spheres don't need rotation
                     position=sphere.local_xyz,
                 )
