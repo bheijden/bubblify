@@ -60,12 +60,7 @@ bubblify --urdf_path ./robot.urdf --port 8081 --show_collision
 ## Interactive Features
 
 ### Demo Video
-<p align="center">
-  <video width="80%" controls onloadedmetadata="this.defaultPlaybackRate=2; this.playbackRate=2;">
-    <source src="https://github.com/user-attachments/assets/003f248c-a185-4bb0-ae1b-964adfe20ee0" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-</p>
+<video src="https://github.com/user-attachments/assets/003f248c-a185-4bb0-ae1b-964adfe20ee0" width="352" height="720"></video>
 
 ## Benefits for Motion Planning
 
