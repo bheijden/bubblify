@@ -9,22 +9,19 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from bubblify import BubblifyApp
 
+
 def test_bubblify():
     """Test the simplified Bubblify application with a simple robot."""
-    
+
     print("🧪 Testing simplified Bubblify interface...")
-    
+
     try:
-        app = BubblifyApp(
-            robot_name="panda",
-            show_collision=False,
-            port=8081
-        )
-        
+        app = BubblifyApp(robot_name="panda", show_collision=False, port=8081)
+
         print("✅ Bubblify app created successfully!")
         print("📋 Simplified GUI features:")
         print("  • Clean robot controls with joint sliders")
-        print("  • Simple link/sphere selection dropdowns") 
+        print("  • Simple link/sphere selection dropdowns")
         print("  • Interactive transform controls for sphere positioning")
         print("  • Streamlined visibility controls")
         print("  • Simplified export options")
@@ -42,14 +39,15 @@ def test_bubblify():
         print("  • User-friendly sphere ID dropdown")
         print("  • Consolidated visibility controls")
         print("  • Clickable spheres for selection")
-        
+
         # Don't actually run the server in test mode
         print("\n⚠️  Test mode - not starting server")
         return True
-        
+
     except Exception as e:
         print(f"❌ Test failed: {e}")
         return False
+
 
 if __name__ == "__main__":
     success = test_bubblify()

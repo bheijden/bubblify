@@ -22,7 +22,7 @@ from viser import transforms as tf
 @dataclasses.dataclass
 class Sphere:
     """Represents a collision sphere attached to a URDF link."""
-    
+
     id: int
     link: str
     local_xyz: Tuple[float, float, float]
@@ -33,43 +33,42 @@ class Sphere:
 
 class SphereStore:
     """Manages collection of spheres and their relationships to URDF links."""
-    
+
     def __init__(self):
         self._next_id = itertools.count(0)
         self.by_id: Dict[int, Sphere] = {}
         self.ids_by_link: Dict[str, List[int]] = {}
         self.group_nodes: Dict[str, viser.FrameHandle] = {}  # /spheres/<link> parents
 
-    def add(self, link: str, xyz: Tuple[float, float, float] = (0.0, 0.0, 0.0), 
-            radius: float = 0.05) -> Sphere:
+    def add(self, link: str, xyz: Tuple[float, float, float] = (0.0, 0.0, 0.0), radius: float = 0.05) -> Sphere:
         """Add a new sphere to the specified link."""
         s = Sphere(id=next(self._next_id), link=link, local_xyz=xyz, radius=radius)
         self.by_id[s.id] = s
         self.ids_by_link.setdefault(link, []).append(s.id)
         return s
-    
+
     def remove(self, sphere_id: int) -> Optional[Sphere]:
         """Remove a sphere by ID."""
         if sphere_id not in self.by_id:
             return None
-        
+
         sphere = self.by_id.pop(sphere_id)
         self.ids_by_link[sphere.link].remove(sphere_id)
-        
+
         # Clean up empty link lists
         if not self.ids_by_link[sphere.link]:
             del self.ids_by_link[sphere.link]
-            
+
         # Remove from scene
         if sphere.node is not None:
             sphere.node.remove()
-            
+
         return sphere
-    
+
     def get_spheres_for_link(self, link: str) -> List[Sphere]:
         """Get all spheres attached to a specific link."""
         return [self.by_id[sid] for sid in self.ids_by_link.get(link, [])]
-    
+
     def clear(self):
         """Remove all spheres."""
         for sphere in list(self.by_id.values()):
@@ -78,13 +77,13 @@ class SphereStore:
 
 class EnhancedViserUrdf:
     """Enhanced URDF visualizer with per-link control capabilities.
-    
+
     Extends the basic ViserUrdf functionality to provide:
     - Individual link visibility control
     - Direct access to link frames
     - Mesh node handles for fine-grained control
     """
-    
+
     def __init__(
         self,
         target: viser.ViserServer | viser.ClientHandle,
@@ -125,11 +124,11 @@ class EnhancedViserUrdf:
         self._visual_root_frame: viser.FrameHandle | None = None
         self._joint_frames: List[viser.SceneNodeHandle] = []
         self._meshes: List[viser.SceneNodeHandle] = []
-        
+
         # Enhanced functionality: per-link control
         self.link_frame: Dict[str, viser.FrameHandle] = {}
         self.link_meshes: Dict[str, List[viser.SceneNodeHandle]] = {}
-        
+
         num_joints_to_repeat = 0
         if load_meshes:
             if urdf.scene is not None:
@@ -170,9 +169,9 @@ class EnhancedViserUrdf:
             base_link = scene.graph.base_frame
             self.link_frame[base_link] = self._visual_root_frame
         elif collision and self._collision_root_frame is not None:
-            base_link = scene.graph.base_frame  
+            base_link = scene.graph.base_frame
             self.link_frame[base_link] = self._collision_root_frame
-        
+
         # Index joint frames (link frames) by matching joint child names
         joint_offset = len(self._joint_frames) - len(self._urdf.joint_map)
         for i, joint in enumerate(self._urdf.joint_map.values()):
@@ -194,17 +193,12 @@ class EnhancedViserUrdf:
         if self._visual_root_frame is not None:
             self._visual_root_frame.visible = visible
         else:
-            warnings.warn(
-                "Cannot set `.show_visual`, since no visual meshes were loaded."
-            )
+            warnings.warn("Cannot set `.show_visual`, since no visual meshes were loaded.")
 
     @property
     def show_collision(self) -> bool:
         """Returns whether the collision meshes are currently visible."""
-        return (
-            self._collision_root_frame is not None
-            and self._collision_root_frame.visible
-        )
+        return self._collision_root_frame is not None and self._collision_root_frame.visible
 
     @show_collision.setter
     def show_collision(self, visible: bool) -> None:
@@ -212,9 +206,7 @@ class EnhancedViserUrdf:
         if self._collision_root_frame is not None:
             self._collision_root_frame.visible = visible
         else:
-            warnings.warn(
-                "Cannot set `.show_collision`, since no collision meshes were loaded."
-            )
+            warnings.warn("Cannot set `.show_collision`, since no collision meshes were loaded.")
 
     def set_link_visible(self, link_name: str, visible: bool, which: str = "visual"):
         """Set visibility of a specific link's meshes."""
@@ -237,18 +229,14 @@ class EnhancedViserUrdf:
         self._urdf.update_cfg(configuration)
         for joint, frame_handle in zip(self._joint_map_values, self._joint_frames):
             assert isinstance(joint, yourdfpy.Joint)
-            T_parent_child = self._urdf.get_transform(
-                joint.child, joint.parent, collision_geometry=not self._load_meshes
-            )
+            T_parent_child = self._urdf.get_transform(joint.child, joint.parent, collision_geometry=not self._load_meshes)
             frame_handle.wxyz = tf.SO3.from_matrix(T_parent_child[:3, :3]).wxyz
             frame_handle.position = T_parent_child[:3, 3] * self._scale
 
     def get_actuated_joint_limits(self) -> dict[str, tuple[float | None, float | None]]:
         """Returns an ordered mapping from actuated joint names to position limits."""
         out: dict[str, tuple[float | None, float | None]] = {}
-        for joint_name, joint in zip(
-            self._urdf.actuated_joint_names, self._urdf.actuated_joints
-        ):
+        for joint_name, joint in zip(self._urdf.actuated_joint_names, self._urdf.actuated_joints):
             assert isinstance(joint_name, str)
             assert isinstance(joint, yourdfpy.Joint)
             if joint.limit is None:
@@ -275,9 +263,7 @@ class EnhancedViserUrdf:
         """Helper function to add joint frames and meshes to the ViserUrdf object."""
         prefix = "collision" if collision_geometry else "visual"
         prefixed_root_node_name = (f"{root_node_name}/{prefix}").replace("//", "/")
-        root_frame = self._target.scene.add_frame(
-            prefixed_root_node_name, show_axes=False
-        )
+        root_frame = self._target.scene.add_frame(prefixed_root_node_name, show_axes=False)
 
         # Add coordinate frame for each joint.
         for joint in self._urdf.joint_map.values():
@@ -329,7 +315,7 @@ class EnhancedViserUrdf:
                 )
             else:
                 raise ValueError("Invalid mesh_color_override format")
-            
+
             # Store mesh handle and map it to the correct URDF link
             if mesh_handle is not None:
                 self._meshes.append(mesh_handle)
@@ -357,11 +343,7 @@ def _viser_name_from_frame(
     return "/".join(frames[::-1])
 
 
-def inject_spheres_into_urdf_xml(
-    original_urdf_path: Optional[Path], 
-    urdf_obj: yourdfpy.URDF, 
-    store: SphereStore
-) -> str:
+def inject_spheres_into_urdf_xml(original_urdf_path: Optional[Path], urdf_obj: yourdfpy.URDF, store: SphereStore) -> str:
     """Inject collision spheres into URDF XML, replacing all existing collision elements."""
     if original_urdf_path is not None:
         root = ET.parse(original_urdf_path).getroot()
@@ -371,30 +353,29 @@ def inject_spheres_into_urdf_xml(
 
     # Map link name to element
     link_elems = {e.get("name"): e for e in root.findall("link")}
-    
+
     # Remove ALL existing collision elements from ALL links (not just sphere links)
     for link_elem in link_elems.values():
         # Find and remove all collision elements
         collision_elems = link_elem.findall("collision")
         for collision_elem in collision_elems:
             link_elem.remove(collision_elem)
-    
+
     # Add sphere collision elements
     for link_name, sphere_ids in store.ids_by_link.items():
         link_elem = link_elems.get(link_name)
         if link_elem is None:
             continue
-            
+
         for sphere_id in sphere_ids:
             sphere = store.by_id[sphere_id]
             coll = ET.SubElement(link_elem, "collision", {"name": f"sphere_{sphere.id}"})
-            origin = ET.SubElement(coll, "origin", {
-                "xyz": f"{sphere.local_xyz[0]} {sphere.local_xyz[1]} {sphere.local_xyz[2]}",
-                "rpy": "0 0 0"
-            })
+            origin = ET.SubElement(
+                coll, "origin", {"xyz": f"{sphere.local_xyz[0]} {sphere.local_xyz[1]} {sphere.local_xyz[2]}", "rpy": "0 0 0"}
+            )
             geom = ET.SubElement(coll, "geometry")
             sph = ET.SubElement(geom, "sphere", {"radius": f"{sphere.radius}"})
-    
+
     # Pretty format the XML with proper indentation (Python 3.8 compatible)
     def indent_xml(elem, level=0, indent="  "):
         """Indent XML for pretty printing (Python 3.8 compatible)."""
@@ -411,9 +392,9 @@ def inject_spheres_into_urdf_xml(
         else:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
-    
+
     indent_xml(root)
-    
+
     # Add XML declaration and return
     xml_content = ET.tostring(root, encoding="unicode")
     return '<?xml version="1.0" encoding="utf-8"?>\n' + xml_content

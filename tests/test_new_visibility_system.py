@@ -9,19 +9,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from bubblify import BubblifyApp
 
+
 def test_new_visibility_system():
     """Test the new hybrid visibility system."""
-    
+
     print("🔄 Testing New Hybrid Visibility System")
     print("=" * 45)
-    
+
     try:
-        app = BubblifyApp(
-            robot_name="panda",
-            show_collision=False,
-            port=8084
-        )
-        
+        app = BubblifyApp(robot_name="panda", show_collision=False, port=8084)
+
         print("✅ New visibility system initialized successfully!")
         print()
         print("🎛️  New Visibility Controls:")
@@ -41,7 +38,7 @@ def test_new_visibility_system():
         print()
         print("🎯 Smart Behavior:")
         print("  • Selected link meshes = binary on/off")
-        print("  • Other link meshes = binary on/off") 
+        print("  • Other link meshes = binary on/off")
         print("  • Selected sphere = 1.0 opacity (fully visible)")
         print("  • Unselected spheres (same link) = 0.5 opacity")
         print("  • Other links spheres = 0.2 opacity")
@@ -58,13 +55,14 @@ def test_new_visibility_system():
         print("  • Toggle 'Show Other Links' to reduce visual clutter")
         print("  • Adjust sphere opacities for perfect visual balance")
         print("  • Binary toggles = reliable, opacity sliders = smooth")
-        
+
         print("\n⚠️  Test mode - not starting server")
         return True
-        
+
     except Exception as e:
         print(f"❌ Test failed: {e}")
         return False
+
 
 if __name__ == "__main__":
     success = test_new_visibility_system()

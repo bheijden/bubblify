@@ -9,19 +9,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from bubblify import BubblifyApp
 
+
 def test_opacity_system():
     """Test the new opacity-based visibility system."""
-    
+
     print("🎨 Testing Opacity-Based Visibility System")
     print("=" * 50)
-    
+
     try:
-        app = BubblifyApp(
-            robot_name="panda",
-            show_collision=False,
-            port=8082
-        )
-        
+        app = BubblifyApp(robot_name="panda", show_collision=False, port=8082)
+
         print("✅ Opacity system initialized successfully!")
         print()
         print("🎛️  New Opacity Controls:")
@@ -49,13 +46,14 @@ def test_opacity_system():
         print("  • No more losing spheres when toggling visibility")
         print("  • Smooth opacity transitions for better UX")
         print("  • Independent robot/sphere opacity control")
-        
+
         print("\n⚠️  Test mode - not starting server")
         return True
-        
+
     except Exception as e:
         print(f"❌ Test failed: {e}")
         return False
+
 
 if __name__ == "__main__":
     success = test_opacity_system()
