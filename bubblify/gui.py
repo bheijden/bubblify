@@ -239,7 +239,11 @@ class BubblifyApp:
             link_sphere_count = self.server.gui.add_text("Spheres on Current Link", initial_value="0")
             
             # Sphere properties
-            sphere_radius = self.server.gui.add_slider("Radius", min=0.005, max=0.5, step=0.001, initial_value=0.05)
+            # Adjust range so 0.05 is at 33% of the slider range
+            # If 0.05 should be at 33%, then: 0.05 = min + 0.33 * (max - min)
+            # Solving: max = (0.05 - min) / 0.33 + min
+            # With min=0.005: max = (0.05 - 0.005) / 0.33 + 0.005 = 0.14
+            sphere_radius = self.server.gui.add_slider("Radius", min=0.005, max=0.14, step=0.001, initial_value=0.05)
             sphere_color = self.server.gui.add_rgb("Color", initial_value=(255, 180, 60))
             self._sphere_radius_slider = sphere_radius  # Store reference
             self._sphere_color_input = sphere_color  # Store reference
@@ -319,12 +323,25 @@ class BubblifyApp:
             
             @add_sphere_btn.on_click
             def _(_):
-                """Add a new sphere to the selected link."""
+                """Add a new sphere to the selected link using current radius."""
                 link_name = link_dropdown.value
-                sphere = self.sphere_store.add(link_name, xyz=(0.0, 0.0, 0.0), radius=0.05)
+                current_radius = sphere_radius.value  # Use radius from slider
+                
+                # Add sphere at origin (revert to original single-sphere behavior)
+                sphere = self.sphere_store.add(link_name, xyz=(0.0, 0.0, 0.0), radius=current_radius)
                 self._create_sphere_visualization(sphere)
+                
+                # Select the new sphere as current
                 self.current_sphere_id = sphere.id
+                
+                # Update dropdown and controls immediately
                 update_sphere_dropdown()
+                
+                # Directly call the control update methods to show gizmo immediately
+                self._update_transform_control()
+                self._update_radius_gizmo()
+                self._update_sphere_properties_ui()
+                self._update_sphere_opacities()
                 
             @delete_sphere_btn.on_click
             def _(_):
@@ -579,54 +596,65 @@ class BubblifyApp:
         if parent_frame is None:
             return
 
-        # Place the gizmo at 45 degrees (X+Y direction) to avoid overlap with transform controls
-        # Position it on the sphere surface at 45 degrees in XY plane
-        offset_distance = s.radius
-        angle_rad = math.pi / 4  # 45 degrees
-        gx = s.local_xyz[0] + offset_distance * math.cos(angle_rad)
-        gy = s.local_xyz[1] + offset_distance * math.sin(angle_rad)
-        gz = s.local_xyz[2]
+        # Position gizmo at 135 degrees around Z-axis for better visibility
+        import math
+        angle = 3 * math.pi / 4  # 135 degrees
+        gizmo_pos = (
+            s.local_xyz[0] + s.radius * math.cos(angle),  # X component at 45°
+            s.local_xyz[1] + s.radius * math.sin(angle),  # Y component at 45°
+            s.local_xyz[2]                                # Same Z as center
+        )
         
         gizmo_name = f"{parent_frame.name}/radius_gizmo_{s.id}"
 
+        # Create rotation quaternion for 135 degrees around Z-axis
+        # This rotates the gizmo's X-axis by 135 degrees, making it point diagonally
+        from viser import transforms as tf
+        rotation_135deg = tf.SO3.from_z_radians(angle)  # 135° rotation around Z
+        
+        # Create a single-axis gizmo that allows full bidirectional movement along the rotated X axis
+        # This allows both increasing and decreasing radius, including going to zero
         self.radius_gizmo = self.server.scene.add_transform_controls(
             gizmo_name,
-            scale=0.3,  # Make it even more visible
-            active_axes=(True, False, False),      # Only X axis visible and active
+            scale=0.4,  # Reduce size to be less prominent
+            active_axes=(True, False, False),  # Only X axis active (but now rotated)
             disable_sliders=True,
             disable_rotations=True,
-            # Constrain movement along the radial direction (45-degree line)
-            translation_limits=((0.001, 10.0), (gy, gy), (gz, gz)),
-            position=(gx, gy, gz),
+            # Allow full range movement - no translation limits to enable zero radius
+            wxyz=rotation_135deg.wxyz,  # Rotate the gizmo 135 degrees
+            position=gizmo_pos,
         )
 
         @self.radius_gizmo.on_update
         def _(_):
             if self.current_sphere_id not in self.sphere_store.by_id:
                 return
+                
             s2 = self.sphere_store.by_id[self.current_sphere_id]
-            # Since we constrained Y and Z, only X movement affects radius
-            # Calculate new radius based on X position change
-            angle_rad = math.pi / 4  # 45 degrees
-            cos_angle = math.cos(angle_rad)
+            gizmo_pos_current = self.radius_gizmo.position
             
-            # The X position change directly corresponds to radius change along the 45-degree line
-            gizmo_x = float(self.radius_gizmo.position[0])
-            expected_center_x = s2.local_xyz[0] + s2.radius * cos_angle
+            # Calculate new radius as distance from sphere center to gizmo position
+            # This is the fundamental relationship: radius = distance from center to gizmo
+            center_to_gizmo = (
+                gizmo_pos_current[0] - s2.local_xyz[0],
+                gizmo_pos_current[1] - s2.local_xyz[1],
+                gizmo_pos_current[2] - s2.local_xyz[2]
+            )
+            new_radius = math.sqrt(center_to_gizmo[0]**2 + center_to_gizmo[1]**2 + center_to_gizmo[2]**2)
+            new_radius = max(0.0, new_radius)  # Allow zero radius
             
-            # Calculate radius from the X-axis movement
-            new_r = s2.radius + (gizmo_x - expected_center_x) / cos_angle
-            new_r = max(0.005, new_r)  # Minimum radius to prevent issues
+            # Update sphere radius
+            s2.radius = new_radius
+            self._update_sphere_visualization(s2)
             
-            # Only update if there's a meaningful change to prevent flickering
-            if abs(new_r - s2.radius) > 0.001:
-                s2.radius = new_r
-                self._update_sphere_visualization(s2)
-                # Update the UI slider to reflect the new radius
-                if self._sphere_radius_slider:
-                    self._updating_sphere_ui = True
-                    self._sphere_radius_slider.value = new_r
-                    self._updating_sphere_ui = False
+            # Don't reposition the gizmo here! Let the user drag it freely.
+            # The gizmo position directly controls the radius - no secondary positioning logic needed.
+            
+            # Update UI slider without triggering callbacks
+            if self._sphere_radius_slider:
+                self._updating_sphere_ui = True
+                self._sphere_radius_slider.value = new_radius
+                self._updating_sphere_ui = False
 
     def _update_sphere_properties_ui(self):
         """Update the sphere property UI controls to reflect the currently selected sphere."""
