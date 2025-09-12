@@ -1,0 +1,14 @@
+__pycache__/
+*.py[oc]
+*.egg-info/
+.venv/
+.git/
+.gitignore
+.ruff_cache/
+Dockerfile
+docker-compose.yml
+.dockerignore
+README*.md
+tests/
+scratch/
+public/bubblify_demo.mp4

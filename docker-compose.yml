@@ -1,0 +1,24 @@
+services:
+  bubblify:
+    build: 
+      context: .
+      tags:
+        - bubblify:latest
+    image: bubblify:latest
+    container_name: bubblify
+    ports:
+      - "${BUBBLIFY_PORT:-8080}:${BUBBLIFY_PORT:-8080}"
+    volumes:
+      - ./assets:/home/bubblify/app/assets:ro
+      - ./output:/home/bubblify/app/output
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+    network_mode: host
+    stdin_open: true
+    tty: true
+    command: >
+      --urdf_path ${BUBBLIFY_URDF_PATH:-./assets/xarm6/xarm6_rs.urdf}
+      --port ${BUBBLIFY_PORT:-8080}
+      ${BUBBLIFY_SPHERIZATION_YML:+--spherization_yml ${BUBBLIFY_SPHERIZATION_YML}}
+      ${BUBBLIFY_SHOW_COLLISION:+--show_collision}
