@@ -29,6 +29,7 @@ dependencies = [
     "yourdfpy>=0.0.56",
     "trimesh>=4.0.0",
     "numpy>=1.20.0",
+    "pyyaml>=6.0.3",
 ]
 
 [project.scripts]
@@ -39,6 +40,7 @@ dev = [
     "ruff>=0.12.12",
     "setuptools>=75.3.2",
     "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
 ]
 
 [tool.ruff]
@@ -64,3 +66,12 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["bubblify*"]
+
+[tool.coverage.run]
+source = ["bubblify"]
+
+[tool.coverage.report]
+exclude_also = [
+    "class EnhancedViserUrdf",
+    "def _viser_name_from_frame",
+]

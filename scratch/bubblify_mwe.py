@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """
-Bubblify MWE - Interactive URDF spherization tool
+Bubblify MWE - Interactive URDF geometry configuration tool
 
-This script demonstrates the Bubblify application for creating collision sphere
+This script demonstrates the Bubblify application for creating collision geometry
 approximations of robot URDFs using an interactive Viser-based GUI.
 
 Features:
 - Load robot URDFs from robot_descriptions or custom files
 - Interactive joint configuration with sliders
 - Per-link visibility control
-- Add, edit, and position collision spheres
+- Add, edit, and position collision geometries (spheres, boxes, cylinders)
 - Real-time 3D visualization
-- Export to JSON and spherized URDF formats
+- Export to YAML and URDF with geometries formats
 
 Usage:
     python scripts/bubblify_mwe.py --robot panda
     python scripts/bubblify_mwe.py --urdf_path /path/to/robot.urdf
     python scripts/bubblify_mwe.py --robot ur10 --show_collision --port 8081
+    python scripts/bubblify_mwe.py --urdf_path /path/to/robot.urdf --geometry_config ./existing_geometries.yml
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from typing import Optional
+
 
 # Add the project root to Python path so we can import bubblify
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -35,7 +36,7 @@ from bubblify import BubblifyApp
 def main():
     """Main entry point for the Bubblify MWE."""
     parser = argparse.ArgumentParser(
-        description="Interactive URDF spherization tool using Viser",
+        description="Interactive URDF geometry configuration tool using Viser",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -43,24 +44,46 @@ Examples:
   %(prog)s --robot ur10 --show_collision
   %(prog)s --urdf_path /path/to/custom_robot.urdf
   %(prog)s --robot atlas_drc --port 8081
+  %(prog)s --urdf_path /path/to/robot.urdf --geometry_config ./existing_geometries.yml
         """,
     )
 
     parser.add_argument(
-        "--robot", type=str, default="panda", help="Robot name from robot_descriptions package (default: panda)"
+        "--robot",
+        type=str,
+        default="panda",
+        help="Robot name from robot_descriptions package (default: panda)",
     )
 
-    parser.add_argument("--urdf_path", type=Path, help="Path to custom URDF file (overrides --robot if specified)")
+    parser.add_argument(
+        "--urdf_path",
+        type=Path,
+        help="Path to custom URDF file (overrides --robot if specified)",
+    )
 
-    parser.add_argument("--show_collision", action="store_true", help="Show collision meshes in addition to visual meshes")
+    parser.add_argument(
+        "--show_collision",
+        action="store_true",
+        help="Show collision meshes in addition to visual meshes",
+    )
 
     parser.add_argument("--port", type=int, default=8080, help="Viser server port (default: 8080)")
+
+    parser.add_argument(
+        "--geometry_config",
+        type=Path,
+        help="Path to existing geometry configuration YAML file to load (optional)",
+    )
 
     args = parser.parse_args()
 
     # Validate arguments
     if args.urdf_path is not None and not args.urdf_path.exists():
-        print(f"L Error: URDF file not found: {args.urdf_path}")
+        print(f"❌ Error: URDF file not found: {args.urdf_path}")
+        sys.exit(1)
+
+    if args.geometry_config is not None and not args.geometry_config.exists():
+        print(f"❌ Error: Geometry configuration YAML file not found: {args.geometry_config}")
         sys.exit(1)
 
     # Welcome message
@@ -85,18 +108,19 @@ Examples:
             urdf_path=args.urdf_path,
             show_collision=args.show_collision,
             port=args.port,
+            geometry_config=args.geometry_config,
         )
 
         print("🎮 GUI Controls:")
         print("  • Use 'Robot Controls' to configure joints and visibility")
-        print("  • Use 'Sphere Editor' to add and edit collision spheres")
-        print("  • Use 'Export' to save your spherization")
+        print("  • Use 'Geometry Editor' to add and edit collision geometries")
+        print("  • Use 'Export' to save your geometry configuration")
         print()
         print("💡 Tips:")
-        print("  • Select a link, then add spheres to it")
-        print("  • Use the 3D transform gizmo to position spheres")
-        print("  • Click on spheres in the 3D view to select them")
-        print("  • Toggle mesh visibility and adjust sphere opacity for focus")
+        print("  • Select a link, then add geometries to it")
+        print("  • Use the 3D transform gizmo to position geometries")
+        print("  • Click on geometries in the 3D view to select them")
+        print("  • Toggle mesh visibility and adjust geometry opacity for focus")
         print("  • Export YAML for quick save/load, URDF for final use")
         print()
 
